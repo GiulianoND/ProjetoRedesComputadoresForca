@@ -5,6 +5,7 @@
 
 import json
 import threading
+import random
 from socket import *
 
 #alocando servidor
@@ -17,11 +18,23 @@ serverSocket.listen()
 #inicializando variáveis para localizar o usuário no chat
 clients = []
 users = []
-server_names = ["#games", "#tech", "#pets", "#series", "#movies"]
-server_clients = [[],[],[],[],[]]
+server_names = ["#Iniciar"]
+server_clients = [[]]
 donoDaRodada = 0
-interacoes = 1
+interacoes = 0
+bancoDePalavras = ["teste", 'aloha']
+palavra = []
+palavraEscondida = []
+sessãoDeJogo = 0
+letrasEscolhidas = []
 print("Inicializando servidor... Pronto!")
+
+
+#Inicia jogo
+def iniciaJogo(palavra):
+    global palavraEscondida
+    for letra in palavra:
+        palavraEscondida.append("_")
 
 #função reply responde às mensagens de protocolo trocadas com os clientes
 def reply(message, client):
@@ -30,31 +43,65 @@ def reply(message, client):
 
 #verifica vez do cliente
 def isVezDoClient(client, id):
+	global donoDaRodada
+	global interacoes
 	if(client == server_clients[id][donoDaRodada]):
-		vezDoclient = server_clients[id][donoDaRodada]
-		donoDaRodada = server_clients[id].len % interacoes
+		interacoes = interacoes+1
+		donoDaRodada =  interacoes % len(server_clients[id])
 		return True
 	return False
 
+def iniciaJogo(palavraSorteada):
+    global palavraEscondida
+    global palavra
+    palavra = palavraSorteada
+    for letra in palavra:
+        palavraEscondida.append("_")
+    
 #servidor recebe mensagem de um usuário e repassa para os usuários que estão nessa sala
 def transmission(message, server, user, client):
+	global palavraEscondida
+	global palavra
+	global letrasEscolhidas
 	id = server_names.index(server)
 	if(isVezDoClient(client, id) == False):
 		reply('NEWMSG '+ server + ' ' + user + ' BEGIN ' + "Não é a sua vez", client)
 	else:
+		flagDePontos = 0
+		vitoria = 1
+		for i in range(len(palavra)):
+			if(palavra[i] == message and (palavra[i] != palavraEscondida[i])):
+				palavraEscondida[i] = palavra[i]
+				flagDePontos = flagDePontos+1
+		
+		for i in range(len(palavra)):
+			if(palavraEscondida[i] != palavra[i]):
+				vitoria = 0
+				break
+		if(vitoria == 1):
+			reply('NEWMSG '+ server + ' ' + user + ' BEGIN ' + 'Jogo finalizado '.join(palavraEscondida), x)
+
+		letrasEscolhidas.append(message)
+		
+
+
+
 		for x in server_clients[id]:
 			#client.send(message)
 			#	NEWMSG #SERVER1 USER BEGIN "textextextextext..."
-			if x != client:
-				reply('NEWMSG '+ server + ' ' + user + ' BEGIN ' + message, x)
-["newmsg", "Server","user","Begin", "message"]
+				reply('NEWMSG '+ server + ' ' + user + ' BEGIN ' + ' '.join(palavraEscondida), x)
+
 #tratamento das mensagens enviadas pelo cliente
 def clientController(client):
+	global sessãoDeJogo
 	while True:
 		message = client.recv(4000)
 		decoded_message = message.decode()
 		info = decoded_message.split(' ') #		CONNECT #games   info = ["CONNECT", "#games"]
-
+		if(sessãoDeJogo == 0):
+			palavra = bancoDePalavras[random.randint(0,len(bancoDePalavras))-1]
+			sessãoDeJogo = 1
+			iniciaJogo(list(palavra))
 		if (info[0] == 'FORCEQUIT') or (info[0] == 'SHUTDOWN'):
 			reply('GOODBYE', client)
 			#clients.remove(client)

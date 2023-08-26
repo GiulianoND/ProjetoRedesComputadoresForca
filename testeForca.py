@@ -1,12 +1,17 @@
+import random
+
+bancoDePalavras = ["teste", 'ab'] 
+palavra = ["a","b"]
 def iniciaJogo(palavra):
-    palavraEscondida = ""
+    palavraEscondida = []
     for letra in palavra:
-        palavraEscondida = palavraEscondida + "_ "
-    
-    print(palavraEscondida)
+        palavraEscondida.append("_")
+    print(len(palavra))
+    for i in range(len(palavra)):
+        print(i)
 
 
-
+iniciaJogo(list(bancoDePalavras[random.randint(0,len(bancoDePalavras))-1]))
 server_clients = [["teste","giu","aleluia"],[],[],[],[]]
 vezDoclient = 0
 
@@ -17,4 +22,3 @@ def verificaVezDoClient(client, id):
         print("True")
     print("False")
 
-verificaVezDoClient("giu", 0)
